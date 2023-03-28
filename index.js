@@ -16,39 +16,24 @@ const app = express();
 
 app.use(express.json());
 
+
 app.post("/", async (req, res) => {
   try {
     // console.log(req.body)
-    // const { productId, quantity, operation } = { ...req.body };
-    const createProduct = await Product.create(req.body);
+    const { productId, quantity, operation } = { ...req.body };
+    const createProduct = await Product.create({
+      productId,
+      quantity,
+      operation,
+    });
     res.status(201).json({
       status: "success",
       data: createProduct,
     });
   } catch (error) {
-    res.status(400).json({
-        status: "fail",
-        msg: error.message
-    })
+    console.log(error);
   }
 });
-// app.post("/", async (req, res) => {
-//   try {
-//     // console.log(req.body)
-//     const { productId, quantity, operation } = { ...req.body };
-//     const createProduct = await Product.create({
-//       productId,
-//       quantity,
-//       operation,
-//     });
-//     res.status(201).json({
-//       status: "success",
-//       data: createProduct,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//   }
-// });
 
 app.delete("/:id", async (req, res) => {
   try {
