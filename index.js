@@ -16,40 +16,88 @@ const app = express();
 
 app.use(express.json());
 
-
 app.post("/", async (req, res) => {
   try {
-    // console.log(req.body)
-    const { productId, quantity, operation } = { ...req.body };
-    const createProduct = await Product.create({
-      productId,
-      quantity,
-      operation,
-    });
-    res.status(201).json({
+    const products = req.body;
+    let data = {};
+
+    const checkIfData = await Product.findOne({});
+
+    if (!checkIfData) {
+      const createProduct = new Product({ products });
+      data = await createProduct.save();
+    } else {
+      checkIfData.products.push(...req.body);
+      data = await checkIfData.save();
+    }
+
+    return res.status(201).json({
       status: "success",
-      data: createProduct,
+      data: data,
     });
   } catch (error) {
-    console.log(error);
+    return res.status(400).json({
+      status: "fail",
+      msg: error,
+    });
   }
 });
 
-app.delete("/:id", async (req, res) => {
+app.delete("/:id/:productId", async (req, res) => {
   try {
-    await Product.deleteOne({ _id: req.params.id });
-    res.status(200).json({
-        status: "success",
-        msg: 'deleted'
-    })
-  } catch (error) {
-    res.status(400).json({
+    // await Product.deleteOne({ _id: req.params.id });
+
+    if (!req.params.id) {
+      return res.status(400).json({
         status: "fail",
-        msg: error.message
-    })
+        msg: "please input the correct Id",
+      });
+    }
+    const data = await Product.findOne({ _id: req.params.id });
+
+    if (!data) {
+      return res.status(404).json({
+        status: "fail",
+        msg: "No data not found with this Id!",
+      });
+    }
+
+    if (!req.params.productId) {
+      return res.status(400).json({
+        status: "fail",
+        msg: "please enter the Id of the product to be deleted",
+      });
+    }
+
+    const dataToBeDeleted = data.products.find(
+      (item) => item.productId === Number(req.params.productId)
+    );
+
+    if(!dataToBeDeleted){
+      return res.status(400).json({
+        status:'fail',
+        msg: 'please enter a valid product Id'
+      })
+    }
+
+    const index = data.products.indexOf(dataToBeDeleted);
+
+    data.products.splice(index, 1);
+
+    await data.save();
+
+    return res.status(200).json({
+      status: "success",
+      msg: "deleted",
+    });
+  } catch (error) {
+    return res.status(400).json({
+      status: "fail",
+      msg: error,
+    });
   }
 });
 
 app.listen(4000, () => {
-  console.log("server is running at port 4000");
+  console.log("server is running at http://localhost:4000");
 });
